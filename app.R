@@ -1,7 +1,7 @@
 library(shiny)
 
 source("modules/mod_questionnaire_patient.R")
-
+source("utils.R")
 kine_choices <- c(
   # APS
   "JP_APS" = "Deneuville JP (Atelier Physio Sport)",
@@ -121,12 +121,12 @@ server <- function(input, output, session) {
       ")))),
       
       if (mode() == "patient") {
-        div(class = "centered-container",
-            img(src = logo_path, class = "login-logo"),
-            h3("📋 Formulaire Patient"),
-            mod_questionnaire_patient_ui("qs_patient")
+        tagList(
+          tags$head(tags$style(HTML(".login-logo { display: none; }"))),  # Masque tout logo venant de app.R
+          mod_questionnaire_patient_ui("qs_patient")
         )
-      } else if (!logged_in()) {
+      }
+      else if (!logged_in()) {
         div(class = "centered-container",
             img(src = logo_path, class = "login-logo"),
             div(class = "login-box",
