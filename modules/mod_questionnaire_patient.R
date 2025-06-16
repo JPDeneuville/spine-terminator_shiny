@@ -70,14 +70,30 @@ mod_questionnaire_patient_ui <- function(id) {
                        condition = sprintf("input['%s'] == 'Actif' || input['%s'] == 'Retraité'", ns("statut"), ns("statut")),
                        textInput(ns("metier"), "Métier ou ancien métier"),
                        selectInput(ns("pcs"), "Catégorie socio-professionnelle", 
-                                   choices = c(
+                                   choices = c("",
                                      "PCS1 - Agriculteurs exploitants / Agricultrices exploitantes",
                                      "PCS2 - Artisans / Artisanes, commerçants / commerçantes et chefs / cheffes d'entreprise",
                                      "PCS3 - Cadres et professions intellectuelles supérieures",
                                      "PCS4 - Professions intermédiaires",
                                      "PCS5 - Employés / Employées",
                                      "PCS6 - Ouvriers / Ouvrières"
-                                   ))
+                                   ),selected = "")
+                     ),
+                     conditionalPanel(
+                       condition = sprintf("input['%s'] == 'Actif'", ns("statut"), ns("statut")),
+                       
+                       selectInput(
+                         inputId = ns("situation_pro"),
+                         label = "Situation professionnelle actuelle",
+                         choices = c("",
+                           "Travail normal",
+                           "Arrêt de travail",
+                           "Mi-temps thérapeutique",
+                           "Invalidité / Maladie professionnelle"
+                         ),
+                         selected = ""
+
+                       )
                      ),
                      
                       tags$h4("Pratique sportive"),
@@ -87,7 +103,7 @@ mod_questionnaire_patient_ui <- function(id) {
                        condition = sprintf("input['%s'] == 'Oui'", ns("sport_pratique")),
                        textInput(ns("sport"), "Quel sport?"),
                        selectInput(ns("frequence_semaine"), "Combien de fois par semaine?", 
-                                   choices = c(
+                                   choices = c("",
                                      "1", 
                                      "2",
                                      "3",
@@ -95,9 +111,9 @@ mod_questionnaire_patient_ui <- function(id) {
                                      "5",
                                      "6",
                                      "7"
-                                   )),
+                                   ), selected = ""),
                      selectInput(ns("duree_entrainement"), "Combien dure un entrainement typique?", 
-                                 choices = c(
+                                 choices = c("",
                                    "30 min", 
                                    "1 heure",
                                    "1 heure et 30 min",
@@ -106,13 +122,13 @@ mod_questionnaire_patient_ui <- function(id) {
                                    "3 heures",
                                    "3 heures et 30 min",
                                    "4 heures"
-                                 )),
+                                 ), selected = ""),
                      selectInput(ns("duree_entrainement"), "A qeulle point vos douleurs affectent votre pratique?", 
-                                 choices = c(
+                                 choices = c("",
                                    "Je pratique normalement", 
                                    "J'ai diminué ou adapté le sport",
                                    "J'ai arrété la pratique"
-                                 ))),
+                                 ), selected = "")),
                        
                        
                        
@@ -127,7 +143,7 @@ mod_questionnaire_patient_ui <- function(id) {
                      conditionalPanel(
                        condition = sprintf("input['%s'] == 'Oui'", ns("chirurgie_rachis")),
                        selectInput(ns("type_chirurgie"), "Type de chirurgie", 
-                                   choices = c("Discectomie (hernie discale)", "Arthrodèse", "Prothèse de disque", "Autre")),
+                                   choices = c("", "Discectomie (hernie discale)", "Arthrodèse", "Prothèse de disque", "Autre"), selected = ""),
                        textInput(ns("date_chirurgie"), "Date de la chirurgie (JJ/MM/AAAA)")
                      ),
                      
@@ -267,7 +283,7 @@ mod_questionnaire_patient_ui <- function(id) {
                      conditionalPanel(
                        condition = sprintf("input['%s'] == 'Oui'", ns("trait_kine")),
                        selectInput(ns("pgic_kine"), "Effet de la kinésithérapie (PGIC)", 
-                                   choices = c(
+                                   choices = c("",
                                      "Pas de changement ou c’est devenu pire", 
                                      "Presque pareil, pratiquement pas d’amélioration",
                                      "Un peu mieux mais pas de changement notable",
@@ -275,14 +291,14 @@ mod_questionnaire_patient_ui <- function(id) {
                                      "Mieux, le changement est modéré mais notable",
                                      "Mieux avec sans aucun doute une amélioration réelle qui fait la différence",
                                      "Nettement mieux, une amélioration considérable qui fait toute la différence"
-                                   ))
+                                   ), selected = character(0))
                      ),
                      
                      radioButtons(ns("trait_medoc"), "Médicaments", choices = c("Oui", "Non"), selected = character(0)),
                      conditionalPanel(
                        condition = sprintf("input['%s'] == 'Oui'", ns("trait_medoc")),
                        selectInput(ns("pgic_medoc"), "Effet des médicaments (PGIC)", 
-                                   choices = c(
+                                   choices = c("",
                                      "Pas de changement ou c’est devenu pire", 
                                      "Presque pareil, pratiquement pas d’amélioration",
                                      "Un peu mieux mais pas de changement notable",
@@ -290,14 +306,14 @@ mod_questionnaire_patient_ui <- function(id) {
                                      "Mieux, le changement est modéré mais notable",
                                      "Mieux avec sans aucun doute une amélioration réelle qui fait la différence",
                                      "Nettement mieux, une amélioration considérable qui fait toute la différence"
-                                   ))
+                                   ), selected = "")
                      ),
                      
                      radioButtons(ns("trait_infiltration"), "Infiltrations", choices = c("Oui", "Non"), selected = character(0)),
                      conditionalPanel(
                        condition = sprintf("input['%s'] == 'Oui'", ns("trait_infiltration")),
                        selectInput(ns("pgic_infiltration"), "Effet des infiltrations (PGIC)", 
-                                   choices = c(
+                                   choices = c("",
                                      "Pas de changement ou c’est devenu pire", 
                                      "Presque pareil, pratiquement pas d’amélioration",
                                      "Un peu mieux mais pas de changement notable",
@@ -305,7 +321,7 @@ mod_questionnaire_patient_ui <- function(id) {
                                      "Mieux, le changement est modéré mais notable",
                                      "Mieux avec sans aucun doute une amélioration réelle qui fait la différence",
                                      "Nettement mieux, une amélioration considérable qui fait toute la différence"
-                                   ))
+                                   ), selected = "")
                      ),
                      
                      radioButtons(ns("trait_osteo"), "Ostéopathie / Thérapie manuelle", choices = c("Oui", "Non"), selected = character(0)),
@@ -320,7 +336,7 @@ mod_questionnaire_patient_ui <- function(id) {
                                      "Mieux, le changement est modéré mais notable",
                                      "Mieux avec sans aucun doute une amélioration réelle qui fait la différence",
                                      "Nettement mieux, une amélioration considérable qui fait toute la différence"
-                                   ))
+                                   ), selected = "")
                      ),
                      
                      tags$h4("Localisation principale de la douleur"),
