@@ -1,7 +1,21 @@
 library(shiny)
+library(shinyjs)
 
 source("modules/mod_questionnaire_patient.R")
 source("utils.R")
+
+# --- Données Kinés ---
+# ---------- TITRES DES ENCARTS ----------
+encart_titles <- c(
+  "Antécédent médicaux", "Traitement antérieur", "Drapeaux rouges",
+  "Évaluation multiparamétrique", "Chimique versus mécanique", "Narration de l'anamnèse",
+  "Bilan postural", "Perte de mouvement de la colonne", "Bilan de hanche/épaule",
+  "Bilan du bassin", "Autre test", "Bilan neurologique", "Bilan musculaire",
+  "Imagerie", "Mouvements répétés", "Diagnostique final", "Prescirption",
+  "Sánce de suvit", "Suivit injection", "Conclusion ou ré-adressage"
+)
+
+
 kine_choices <- c(
   # APS
   "JP_APS" = "Deneuville JP (Atelier Physio Sport)",
@@ -72,15 +86,103 @@ format_identite <- function(patient) {
     "</div>"
   ))
 }
-encart_titles <- c(
-  "Antécédent médicaux", "Traitement antérieur", "Drapeaux rouges",
-  "Évaluation multiparamétrique", "Chimique versus mécanique", "Narration de l'anamnèse",
-  "Bilan postural", "Perte de mouvement de la colonne", "Bilan de hanche/épaule",
-  "Bilan du bassin", "Autre test", "Bilan neurologique", "Bilan musculaire",
-  "Imagerie", "Mouvements répétés", "Diagnostique final", "Prescirption",
-  "Sánce de suvit", "Suivit injection", "Conclusion ou ré-adressage"
-)
 
+# ---------- FONCTIONS DRAPEAUX ROUGES ----------
+get_neuro_alert_level <- function(force_mi, force_ms, sens_mi, sens_ms) {
+  force <- force_mi == "Oui" || force_ms == "Oui"
+  sens  <- sens_mi == "Oui" || sens_ms == "Oui"
+  if (force && sens) return("rouge")
+  else if (force || sens) return("orange")
+  else return("vert")
+}
+
+format_drapeau_neuro <- function(data) {
+  level <- get_neuro_alert_level(
+    data$neuro_force_mi, data$neuro_force_ms,
+    data$neuro_sens_mi, data$neuro_sens_ms
+  )
+  
+  couleur_txt <- switch(level, "vert" = "#4CAF50", "orange" = "#FF9800", "rouge" = "#F44336")
+  icone <- switch(level, "vert" = "🟢", "orange" = "🟠", "rouge" = "🔴")
+  
+  details_list <- list(
+    list(label = "Force MI", value = data$neuro_force_mi, ok = data$neuro_force_mi == "Non"),
+    list(label = "Force MS", value = data$neuro_force_ms, ok = data$neuro_force_ms == "Non"),
+    list(label = "Sensibilité MI", value = data$neuro_sens_mi, ok = data$neuro_sens_mi == "Non"),
+    list(label = "Sensibilité MS", value = data$neuro_sens_ms, ok = data$neuro_sens_ms == "Non")
+  )
+  
+  tagList(
+    div(style = "margin-bottom:10px;",
+        actionLink("toggle_dr_neuro", label = paste0(icone, " Drapeau rouge : neurologie"),
+                   style = paste0("color:", couleur_txt, "; font-weight: bold; font-size: 18px; text-decoration: none;"))),
+    hidden(div(id = "details_dr_neuro",
+               tags$ul(lapply(details_list, function(item) {
+                 col <- if (item$ok) "#4CAF50" else "#F44336"
+                 tags$li(span(style = paste0("color:", col, "; font-weight:bold;"), paste(item$label, ": ", item$value)))
+               }))
+    ))
+  )
+}
+
+
+format_drapeau_general <- function(data) {
+  anorexie <- ifelse(is.null(data$general_anorexie) || is.na(data$general_anorexie), "Non", data$general_anorexie)
+  asthenie <- ifelse(is.null(data$general_asthenie) || is.na(data$general_asthenie), "Non", data$general_asthenie)
+  amaigrissement <- ifelse(is.null(data$general_amaigrissement) || is.na(data$general_amaigrissement), "Non", data$general_amaigrissement)
+  
+  general_alert <- any(c(anorexie, asthenie, amaigrissement) == "Oui")
+  level <- if (general_alert) "rouge" else "vert"
+  couleur_txt <- if (level == "rouge") "#F44336" else "#4CAF50"
+  icone <- if (level == "rouge") "🔴" else "🟢"
+  
+  details <- list(
+    list(label = "Anorexie", value = anorexie, ok = anorexie == "Non"),
+    list(label = "Asthénie", value = asthenie, ok = asthenie == "Non"),
+    list(label = "Amaigrissement", value = amaigrissement, ok = amaigrissement == "Non")
+  )
+  
+  eq_val <- suppressWarnings(as.numeric(data$eq5d_vas))
+  eq_val <- ifelse(is.na(eq_val) || eq_val < 0 || eq_val > 100, 50, eq_val)
+  eq_col <- colorRampPalette(c("#F44336", "#FF9800", "#4CAF50"))(101)[round(eq_val) + 1]
+  
+  tagList(
+    div(style = "margin-bottom:10px;",
+        actionLink("toggle_dr_general", label = paste0(icone, " Drapeau rouge : état général"),
+                   style = paste0("color:", couleur_txt, "; font-weight: bold; font-size: 18px; text-decoration: none;"))),
+    hidden(div(id = "details_dr_general",
+               tags$ul(lapply(details, function(item) {
+                 col <- if (item$ok) "#4CAF50" else "#F44336"
+                 tags$li(span(style = paste0("color:", col, "; font-weight:bold;"),
+                              paste(item$label, ": ", item$value)))
+               })),
+               div(style = paste0("margin-top:10px; font-weight:bold; color:", eq_col),
+                   paste("Auto-évaluation de la santé (EQ-VAS) :", eq_val))
+    ))
+  )
+}
+
+
+format_drapeau_infection <- function(data) {
+  antibio <- ifelse(is.null(data$antibio_3mois) || is.na(data$antibio_3mois), "Non", data$antibio_3mois)
+  urinaire <- ifelse(is.null(data$infection_urinaire_3mois) || is.na(data$infection_urinaire_3mois), "Non", data$infection_urinaire_3mois)
+  
+  antibio_color <- if (antibio == "Oui") "#F44336" else "#4CAF50"
+  antibio_icon <- if (antibio == "Oui") "🔴" else "🟢"
+  
+  urinaire_color <- if (urinaire == "Oui") "#F44336" else "#4CAF50"
+  urinaire_icon <- if (urinaire == "Oui") "🔴" else "🟢"
+  
+  tagList(
+    tags$div(style = paste0("margin-bottom: 6px; font-weight:bold; color:", antibio_color),
+             paste0(antibio_icon, " Prise d'antibiotiques (3 mois) : ", antibio)),
+    tags$div(style = paste0("margin-bottom: 6px; font-weight:bold; color:", urinaire_color),
+             paste0(urinaire_icon, " Infection urinaire (3 mois) : ", urinaire))
+  )
+}
+
+
+# ---------- FORMAT ENCARTS GÉNÉRIQUES ----------
 format_encart <- function(title) {
   HTML(paste0(
     "<div class='encart-box'>",
@@ -90,21 +192,41 @@ format_encart <- function(title) {
   ))
 }
 
-ui <- fluidPage(uiOutput("main_ui"))
+# ---------- INTERFACE ----------
+ui <- fluidPage(
+  useShinyjs(),
+  uiOutput("main_ui")
+)
 
+# ---------- SERVER ----------
 server <- function(input, output, session) {
+  observe({
+    query <- parseQueryString(session$clientData$url_search)
+    if (!is.null(query$mode) && query$mode == 'patient') {
+      mode('patient')
+      updateTabsetPanel(session, 'main_nav', selected = 'questionnaire_patient')
+    }
+    if (!is.null(query$kine)) {
+      print(paste('Kiné sélectionné :', query$kine))
+    }
+  })
+  observe({
+    query <- parseQueryString(session$clientData$url_search)
+    if (!is.null(query$mode) && query$mode == 'patient') {
+      updateTabsetPanel(session, 'main_nav', selected = 'questionnaire_patient')
+    }
+  })
   mode <- reactiveVal("kine")
   logged_in <- reactiveVal(FALSE)
   current_logo <- reactiveVal("logo.png")
   current_bg <- reactiveVal("#F0F7FE")
   
-  observe({
-    query <- parseQueryString(session$clientData$url_search)
-    if (!is.null(query$mode) && query$mode == "patient") {
-      mode("patient")
-    } else {
-      mode("kine")
-    }
+  observeEvent(input$toggle_dr_neuro, {
+    toggle(id = "details_dr_neuro", anim = TRUE)
+  })
+  
+  observeEvent(input$toggle_dr_general, {
+    toggle(id = "details_dr_general", anim = TRUE)
   })
   
   output$main_ui <- renderUI({
@@ -230,8 +352,15 @@ server <- function(input, output, session) {
               }"))),
               HTML(format_identite(patient_data)),
               div(class = "encarts-container",
-                  lapply(encart_titles, format_encart)
+                  div(class = "encart-box",
+                      tags$h4("Drapeaux rouges"),
+                      format_drapeau_neuro(patient_data),
+                      format_drapeau_general(patient_data),
+                      format_drapeau_infection(patient_data)
+                  ),
+                  lapply(encart_titles[encart_titles != "Drapeaux rouges"], format_encart)
               )
+              
             )
           })
         } else {
@@ -246,6 +375,7 @@ server <- function(input, output, session) {
 }
 
 shinyApp(ui, server)
+
 
 
 

@@ -65,7 +65,7 @@ mod_questionnaire_patient_ui <- function(id) {
                        column(4, radioButtons(ns("sexe"), "Sexe", choices = c("Homme", "Femme"), selected = character(0)))
                      ),
                      
-                     radioButtons(ns("statut"), "Statut professionnel", choices = c("Étudiant", "Actif", "Retraité")),
+                     radioButtons(ns("statut"), "Statut professionnel", choices = c("Étudiant", "Actif", "Retraité"), selected = character(0)),
                      conditionalPanel(
                        condition = sprintf("input['%s'] == 'Actif' || input['%s'] == 'Retraité'", ns("statut"), ns("statut")),
                        textInput(ns("metier"), "Métier ou ancien métier"),
@@ -123,7 +123,7 @@ mod_questionnaire_patient_ui <- function(id) {
                        # ATCD médicaux
                      tags$h4("Antécédents médicaux"),
                      
-                     radioButtons(ns("chirurgie_rachis"), "Avez-vous déjà été opéré du dos, des lombaires ou des cervicales ?", choices = c("Non", "Oui")),
+                     radioButtons(ns("chirurgie_rachis"), "Avez-vous déjà été opéré du dos, des lombaires ou des cervicales ?", choices = c("Non", "Oui"), selected = character(0)),
                      conditionalPanel(
                        condition = sprintf("input['%s'] == 'Oui'", ns("chirurgie_rachis")),
                        selectInput(ns("type_chirurgie"), "Type de chirurgie", 
@@ -499,3 +499,115 @@ mod_questionnaire_patient_ui <- function(id) {
 
 
 
+
+
+
+mod_questionnaire_patient_server <- function(id) {
+  moduleServer(id, function(input, output, session) {
+    ns <- session$ns
+
+    observeEvent(input$save_btn, {
+      tryCatch({
+        # ⚙️ Étape 1 - Champs de base obligatoires
+        required_fields <- c("nom", "prenom", "naissance", "taille", "poids", "sexe", "statut")
+
+        # Champs conditionnels selon le statut
+        if (input$statut %in% c("Actif", "Retraité")) {
+          required_fields <- c(required_fields, "metier", "pcs")
+        }
+
+        # Vérifie les champs requis
+        missing_fields <- sapply(required_fields, function(field) {
+          is.null(input[[field]]) || input[[field]] == "" || is.na(input[[field]])
+        })
+
+        if (any(missing_fields)) stop("❌ Veuillez remplir tous les champs requis et les dates au format jj/mm/aaaa")
+
+        # Vérification format date de naissance
+        if (!grepl("^\\d{2}/\\d{2}/\\d{4}$", input$naissance)) {
+          stop("❌ Veuillez remplir tous les champs requis et les dates au format jj/mm/aaaa")
+        }
+
+        # 🧬 Génère le hash ID
+        hash_id <- generate_hash(input$nom, input$prenom, input$naissance)
+
+        # 📦 Collecte des données
+        values <- reactiveValuesToList(input)
+        values$hash_id <- hash_id
+        values$date_sauvegarde <- format(Sys.Date(), "%d/%m/%Y")
+
+        values_fixed <- lapply(values, function(x) {
+      if (length(x) == 0) return(NA)
+      if (length(x) > 1) return(paste(x, collapse = ", "))
+      return(x)
+    })
+    
+    # 🏷️ Renommage intelligent des colonnes pour l'analyse
+    rename_map <- c(
+      atcd_rhumato_1 = "rhumato_spa",
+      atcd_rhumato_2 = "rhumato_pr",
+      atcd_rhumato_3 = "rhumato_crohn",
+      atcd_rhumato_4 = "rhumato_rch",
+      atcd_rhumato_5 = "rhumato_uveite",
+      atcd_rhumato_6 = "rhumato_psoriasis",
+      goutte = "rhumato_goutte",
+
+      atcd_cardio_1 = "cardio_chol",
+      atcd_cardio_2 = "cardio_hta",
+      atcd_cardio_3 = "cardio_diabete",
+      atcd_cardio_4 = "cardio_cardiaque",
+      atcd_cardio_5 = "cardio_arterite",
+
+      sante_actuelle_1 = "neuro_force_mi",
+      sante_actuelle_2 = "neuro_force_ms",
+      sante_actuelle_3 = "neuro_sens_mi",
+      sante_actuelle_4 = "neuro_sens_ms",
+
+      signes_generaux_1 = "general_appetit",
+      signes_generaux_2 = "general_perte_poids",
+      signes_generaux_3 = "general_fatigue"
+    )
+
+    # Ajout dynamique des mappings pour ODI, NDI, HAD, BIPQ
+    for (i in 1:10) rename_map[paste0("odi_", i)] <- paste0("odi_Q", i)
+    for (i in 1:10) rename_map[paste0("ndi_", i)] <- paste0("ndi_Q", i)
+    for (i in 1:14) rename_map[paste0("had_", i)] <- paste0("had_Q", i)
+    for (i in 1:8) rename_map[paste0("bipq_", i)] <- paste0("bipq_Q", i)
+
+    rename_map <- c(rename_map,
+      eq_mobilite = "eq5d_mob",
+      eq_autonomie = "eq5d_autonomie",
+      eq_activites = "eq5d_act",
+      eq_douleur = "eq5d_douleur",
+      eq_anxiete = "eq5d_anxiete",
+      eq_vas = "eq5d_vas"
+    )
+
+    names(values_fixed) <- ifelse(names(values_fixed) %in% names(rename_map),
+                                  rename_map[names(values_fixed)],
+                                  names(values_fixed))
+
+    row <- as.data.frame(values_fixed, stringsAsFactors = FALSE)
+
+        # 📁 Sauvegarde dans data/patients.csv
+        path <- "data/patients.csv"
+        if (!dir.exists("data")) dir.create("data")
+
+        if (file.exists(path)) {
+          write.table(row, path, sep = ";", row.names = FALSE, col.names = FALSE, append = TRUE)
+        } else {
+          write.table(row, path, sep = ";", row.names = FALSE, col.names = TRUE, append = FALSE)
+        }
+
+        output$save_status <- renderUI({
+          HTML("<span style='color:green; font-weight:bold;'>✅ Données sauvegardées avec succès !</span>")
+        })
+
+      }, error = function(e) {
+        output$save_status <- renderUI({
+          HTML(paste0("<span style='color:red; font-weight:bold;'>", e$message, "</span>"))
+        })
+      })
+    })
+  })
+}
