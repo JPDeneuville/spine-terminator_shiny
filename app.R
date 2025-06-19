@@ -67,11 +67,15 @@ format_identite <- function(patient) {
   statut <- tolower(patient$statut)
   metier <- patient$metier
   pcs <- gsub("^PCS", "", substr(patient$pcs, 1, 5))
+  situation <- patient$situation_pro
   
+  # On gère selon le statut
   if (statut == "étudiant") {
     affichage_metier <- "Étudiant"
-  } else if (statut %in% c("actif", "retraité")) {
+  } else if (statut == "retraité") {
     affichage_metier <- paste0(metier, " (PCS", pcs, " - ", statut, ")")
+  } else if (statut == "actif") {
+    affichage_metier <- paste0(metier, " (PCS", pcs, " - ", statut, ") - Situation : ", situation)
   } else {
     affichage_metier <- metier
   }
@@ -142,7 +146,7 @@ format_drapeau_general <- function(data) {
     list(label = "Amaigrissement", value = amaigrissement, ok = amaigrissement == "Non")
   )
   
-  eq_val <- suppressWarnings(as.numeric(data$eq5d_vas))
+  eq_val <- suppressWarnings(as.numeric(data$eq_vas))
   eq_val <- ifelse(is.na(eq_val) || eq_val < 0 || eq_val > 100, 50, eq_val)
   eq_col <- colorRampPalette(c("#F44336", "#FF9800", "#4CAF50"))(101)[round(eq_val) + 1]
   
