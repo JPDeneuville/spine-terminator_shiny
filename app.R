@@ -83,14 +83,39 @@ format_identite <- function(patient) {
     affichage_metier <- metier
   }
   
+  sport_html <- ""
+  if (!is.null(patient$sport_pratique) && patient$sport_pratique == "Oui") {
+    sport_nom <- patient$sport
+    frequence <- patient$frequence_semaine
+    duree <- patient$duree_entrainement
+    effet <- patient$duree_effet_douleur
+    
+    sport_html <- paste0(
+      "<div style='margin-bottom:8px;'>Sport pratiqué : <b>", sport_nom,
+      " (", frequence, " fois, ", duree, " par semaine)</b></div>"
+    )
+    
+    if (!is.null(effet) && effet != "") {
+      sport_html <- paste0(
+        sport_html,
+        "<div style='margin-bottom:8px;'>Effet de la douleur sur la pratique : <b>", effet, "</b></div>"
+      )
+    }
+  } else {
+    sport_html <- "<div style='margin-bottom:8px;'>🏃 Sport pratiqué : <b>Aucun</b></div>"
+  }
+  
+  
   HTML(paste0(
-    "<div style='background:white; padding:20px; border-radius:10px; box-shadow:0 2px 5px rgba(0,0,0,0.1); font-size:18px; max-width:1000px; margin-left:0;'>",
-    "<h4 style='font-weight:bold;'>Identité</h4>",
-    "<div style='margin-bottom:8px;'>Taille : <b>", taille, " cm</b></div>",
-    "<div style='margin-bottom:8px;'>Poids : <b>", poids, " kg</b></div>",
-    "<div style='margin-bottom:8px;'>IMC : <b>", imc, "</b></div>",
-    "<div style='margin-bottom:8px;'>Métier : <b>", affichage_metier, "</b></div>",
-    "</div>"
+    HTML(paste0(
+      "<div style='margin-bottom:8px;'>Taille : <b>", taille, " cm</b></div>",
+      "<div style='margin-bottom:8px;'>Poids : <b>", poids, " kg</b></div>",
+      "<div style='margin-bottom:8px;'>IMC : <b>", imc, "</b></div>",
+      "<div style='margin-bottom:8px;'>Métier : <b>", affichage_metier, "</b></div>",
+      sport_html
+      
+    ))
+    
   ))
 }
 
@@ -1313,11 +1338,12 @@ server <- function(input, output, session) {
               
               # Première ligne : Identité + Évaluation multiparamétrique
               div(class = "encarts-row",
-                  HTML(format_identite(patient_data)),
+                  div(class = "encart-box",
+                      HTML(format_identite(patient_data))
+                  ),
                   div(class = "encart-box",
                       tags$h4("Évaluation multiparamétrique"),
                       format_eval_multiparametrique(patient_data)
-                      
                   )
               ),
               
