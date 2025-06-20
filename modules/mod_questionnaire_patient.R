@@ -333,6 +333,11 @@ mod_questionnaire_patient_ui <- function(id) {
                                    ), selected = "")
                      ),
                      
+                     radioButtons(ns("sympt_acceptables"), 
+                                  label = "Les symptômes actuels sont-ils acceptables ?", 
+                                  choices = c("Oui", "Non"), 
+                                  selected = ""),
+                     
                      tags$h4("Localisation principale de la douleur"),
                      radioButtons(ns("zone_consulte"), "Consultez-vous pour :", 
                                   choices = c("Les lombaires", "Les cervicales", "Les 2"), 
@@ -530,7 +535,7 @@ mod_questionnaire_patient_server <- function(id) {
         required_fields <- c(
           "nom", "prenom", "naissance", "taille", "poids", "sexe", "statut",
           "trauma_experience", "chirurgie_rachis", "chir_recent", "cancer_diagnosed",
-          "zone_consulte", "tabac",
+          "zone_consulte", "tabac", "sympt_acceptables",
           "trait_kine", "trait_medoc", "trait_infiltration", "trait_osteo",
           paste0("had_", 1:14),
           paste0("bipq_", 1:8),
@@ -613,8 +618,8 @@ mod_questionnaire_patient_server <- function(id) {
           sante_actuelle_3 = "neuro_sens_mi", sante_actuelle_4 = "neuro_sens_ms",
           signes_generaux_1 = "general_appetit", signes_generaux_2 = "general_perte_poids",
           signes_generaux_3 = "general_fatigue",
-          organe_cancer_1 = "Thyroïde", organe_cancer_2 = "Poumon", organe_cancer_3 = "Sein",
-          organe_cancer_4 = "Rein", organe_cancer_5 = "Prostate", organe_cancer_6 = "Autre",
+          organe_cancer_1 = "cancer_thyroïde", organe_cancer_2 = "cancer_poumon", organe_cancer_3 = "cancer_sein",
+          organe_cancer_4 = "cancer_rein", organe_cancer_5 = "cancer_prostate", organe_cancer_6 = "cancer_autre",
           odi_1 = "odi_douleur", odi_2 = "odi_soins", odi_3 = "odi_manutentions", odi_4 = "odi_marche",
           odi_5 = "odi_assis", odi_6 = "odi_debout", odi_7 = "odi_sommeil", odi_8 = "odi_sexe",
           odi_9 = "odi_sociale", odi_10 = "odi_deplacements",
