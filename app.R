@@ -102,7 +102,7 @@ format_identite <- function(patient) {
       )
     }
   } else {
-    sport_html <- "<div style='margin-bottom:8px;'>🏃 Sport pratiqué : <b>Aucun</b></div>"
+    sport_html <- "<div style='margin-bottom:8px;'>Sport pratiqué : <b>Aucun</b></div>"
   }
   
   
@@ -971,7 +971,25 @@ format_eval_multiparametrique <- function(data) {
   
   contenu <- append(contenu, list(format_sympt_accept_block(data)))
   
-  return(tagList(contenu))
+  if (!is.null(data$hash_id) && !is.null(data$kine_nom)) {
+    lien <- paste0("https://ton-app.fr/?hash=", data$hash_id, "&kine=", data$kine_nom)
+    contenu <- append(contenu, list(
+      div(style = "margin-top: 20px; font-weight: bold;",
+          tags$p("💬 Suivi patient à distance :"),
+          tags$a(
+            href = lien,
+            target = "_blank",
+            style = "font-size: 16px; color: black; text-decoration: underline;",
+            "📮 Lien vers questionnaire de suivi"
+          )
+      )
+    ))
+  }
+  
+  return(div(
+    style = "font-family: 'Helvetica Neue', sans-serif; font-size: 18px;",  # 💄 Ici tu forces tout
+    tagList(contenu)
+  ))
   
   
 }
@@ -1309,8 +1327,8 @@ server <- function(input, output, session) {
       })
       output$patient_dashboard <- renderUI({ NULL })
     } else {
-      if (file.exists("data/patients.csv")) {
-        df <- read.csv2("data/patients.csv", stringsAsFactors = FALSE)
+      if (file.exists("data/patients_PROM.csv")) {
+        df <- read.csv2("data/patients_PROM.csv", stringsAsFactors = FALSE)
         if (hash %in% df$hash_id) {
           patient_data <<- df[df$hash_id == hash, ]  # ✅ RENDU GLOBAL
           

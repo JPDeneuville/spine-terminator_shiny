@@ -59,29 +59,6 @@ mod_questionnaire_patient_ui <- function(id) {
                        column(4, textInput(ns("prenom"), "Prénom")),
                        column(4, textInput(ns("naissance"), "Date de naissance (JJ/MM/AAAA)"))
                      ),
-                     fluidRow(
-                       column(4, numericInput(ns("taille"), "Taille (cm)", value = NA, min = 30, max = 300)),
-                       column(4, numericInput(ns("poids"), "Poids (kg)", value = NA, min = 30, max = 300)),
-                       column(4, radioButtons(ns("sexe"), "Sexe", choices = c("Homme", "Femme"), selected = ""))
-                     ),
-                     
-                     radioButtons(ns("statut"), "Statut professionnel", choices = c("Étudiant", "Actif", "Retraité"), selected = ""),
-                     conditionalPanel(
-                       condition = sprintf("input['%s'] == 'Actif' || input['%s'] == 'Retraité'", ns("statut"), ns("statut")),
-                       textInput(ns("metier"), "Métier ou ancien métier"),
-                       selectInput(ns("pcs"), "Catégorie socio-professionnelle", 
-                                   choices = c("",
-                                               "PCS1 - Agriculteurs exploitants / Agricultrices exploitantes",
-                                               "PCS2 - Artisans / Artisanes, commerçants / commerçantes et chefs / cheffes d'entreprise",
-                                               "PCS3 - Cadres et professions intellectuelles supérieures",
-                                               "PCS4 - Professions intermédiaires",
-                                               "PCS5 - Employés / Employées",
-                                               "PCS6 - Ouvriers / Ouvrières"
-                                   ),selected = "")
-                     ),
-                     conditionalPanel(
-                       condition = sprintf("input['%s'] == 'Actif'", ns("statut"), ns("statut")),
-                       
                        selectInput(
                          inputId = ns("situation_pro"),
                          label = "Situation professionnelle actuelle",
@@ -96,247 +73,13 @@ mod_questionnaire_patient_ui <- function(id) {
                        )
                      ),
                      
-                     tags$h4("Pratique sportive"),
-                     radioButtons(ns("sport_pratique"), "Pratiquez-vous un sport ?", choices = c("Oui", "Non"), selected = ""),
-                     
-                     conditionalPanel(
-                       condition = sprintf("input['%s'] == 'Oui'", ns("sport_pratique")),
-                       textInput(ns("sport"), "Quel sport?"),
-                       selectInput(ns("frequence_semaine"), "Combien de fois par semaine?", 
-                                   choices = c("",
-                                               "1", 
-                                               "2",
-                                               "3",
-                                               "4",
-                                               "5",
-                                               "6",
-                                               "7"
-                                   ), selected = ""),
-                       selectInput(ns("duree_entrainement"), "Combien dure un entrainement typique?", 
-                                   choices = c("",
-                                               "30 min", 
-                                               "1 heure",
-                                               "1 heure et 30 min",
-                                               "2 heures",
-                                               "2 heures et 30 min",
-                                               "3 heures",
-                                               "3 heures et 30 min",
-                                               "4 heures"
-                                   ), selected = ""),
                        selectInput(ns("duree_effet_douleur"), "A qeulle point vos douleurs affectent votre pratique?", 
                                    choices = c("",
                                                "Je pratique normalement", 
                                                "J'ai diminué ou adapté le sport",
-                                               "J'ai arrété la pratique"
+                                               "J'ai arrété la pratique",
+                                               "Je ne pratique habituellement pas de sport"
                                    ), selected = "")),
-                     
-                     # ATCD médicaux
-                     tags$h4("Antécédents médicaux"),
-                     
-                     radioButtons(ns("chirurgie_rachis"), "Avez-vous déjà été opéré du dos, des lombaires ou des cervicales ?", choices = c("Non", "Oui"), selected = ""),
-                     conditionalPanel(
-                       condition = sprintf("input['%s'] == 'Oui'", ns("chirurgie_rachis")),
-                       selectInput(ns("type_chirurgie"), "Type de chirurgie", 
-                                   choices = c("", "Discectomie (hernie discale)", "Arthrodèse", "Prothèse de disque", "Autre"), selected = ""),
-                       textInput(ns("date_chirurgie"), "Date de la chirurgie (JJ/MM/AAAA)")
-                     ),
-                     
-                     radioButtons(ns("chir_recent"), "Avez-vous subi une chirurgie, quelle que soit la raison, dans les 12 derniers mois ?", choices = c("Non", "Oui"), selected = ""),
-                     conditionalPanel(
-                       condition = sprintf("input['%s'] == 'Oui'", ns("chir_recent")),
-                       textInput(ns("chir_recent_details"), "Pour quelle raison ?")
-                     ),
-                     
-                     tags$h4("Souffrez-vous de l'une des affections suivantes ?"),
-                     lapply(1:6, function(i) {
-                       aff_id <- paste0("atcd_rhumato_", i)
-                       aff_labels <- c(
-                         "Spondylarthrite ankylosante", "Polyarthrite Rhumatoïde", "Maladie de Crohn",
-                         "Rectocolites hémorragiques", "Uvéite", "Psoriasis"
-                       )
-                       fluidRow(
-                         column(6, aff_labels[i]),
-                         column(3, radioButtons(ns(aff_id), NULL, choices = c("Oui", "Non"), inline = TRUE, selected = ""))
-                       )
-                     }),
-                     fluidRow(
-                       column(6, "Crise de goutte"),
-                       column(3, radioButtons(ns("goutte"), NULL, choices = c("Oui", "Non"), inline = TRUE, selected = ""))
-                     ),
-                     
-                     tags$h4("Souffrez-vous d’une des affections suivantes ?"),
-                     lapply(1:5, function(i) {
-                       aff_id <- paste0("atcd_cardio_", i)
-                       aff_labels <- c(
-                         "Cholestérol", "Hypertension", "Diabète",
-                         "Problèmes cardiaques", "Artérite des membres inférieurs"
-                       )
-                       fluidRow(
-                         column(6, aff_labels[i]),
-                         column(3, radioButtons(ns(aff_id), NULL, choices = c("Oui", "Non"), inline = TRUE, selected = ""))
-                       )
-                     }),
-                     
-                     tags$h4("Fumez-vous ?"),
-                     radioButtons(ns("tabac"), "Fumeur actuel", choices = c("Non", "Oui"), selected = ""),
-                     
-                     tags$h4("Parfois, certaines personnes vivent des expériences particulièrement terrifiantes, horribles ou traumatisantes. Par exemple :"),
-                     tags$ol(
-                       tags$li("Un accident ou un incendie sérieux"),
-                       tags$li("Une agression ou un abus physique et/ou sexuel"),
-                       tags$li("Un tremblement de terre ou une inondation importante"),
-                       tags$li("Une guerre"),
-                       tags$li("Voir quelqu'un être tué ou sérieusement blessé"),
-                       tags$li("Un proche mort d'un suicide ou d'un homicide"),
-                       tags$li("Être régulièrement confronté à des gens rapportant des situations horribles (Ex: policier prenant des dépositions de crime, travailleur social confronté à des abus sur mineur, etc...)")
-                     ),
-                     radioButtons(ns("trauma_experience"), "Avez-vous vécu une de ces expériences ?", choices = c("Non", "Oui"), selected = ""),
-                     
-                     conditionalPanel(
-                       condition = sprintf("input['%s'] == 'Oui'", ns("trauma_experience")),
-                       tags$h4("Dans les mois précédents, avez-vous :"),
-                       lapply(1:5, function(i) {
-                         symp_ids <- paste0("ptsd_sympt_", i)
-                         symp_labels <- c(
-                           "Eu des cauchemars ou des pensées/visions à propos de ces événements ?",
-                           "Essayé de ne pas penser à l'événement ou s'est donné beaucoup de mal pour éviter les situations qui rappelaient l'événement ?",
-                           "Été constamment sur vos gardes, sur le qui-vive ou facilement surpris(e) ?",
-                           "Eu une sensation de détachement ou d'insensibilité vis à vis des personnes vous entourant ou des activités que vous faites ?",
-                           "Eu un sentiment de culpabilité, sans pouvoir vous empêcher de vous en vouloir ou d'en vouloir aux autres pour ce qui vous est arrivé ?"
-                         )
-                         fluidRow(
-                           column(6, symp_labels[i]),
-                           column(3, radioButtons(ns(symp_ids), NULL, choices = c("Oui", "Non"), inline = TRUE, selected = ""))
-                         )
-                       })
-                     ),
-                     
-                     # ATCD CANCER
-                     tags$h4("Avez-vous eu un cancer ?"),
-                     radioButtons(ns("cancer_diagnosed"), "Avez-vous eu un cancer ?", choices = c("Oui", "Non"), selected = ""),
-                     
-                     conditionalPanel(
-                       condition = sprintf("input['%s'] == 'Oui'", ns("cancer_diagnosed")),
-                       
-                       tags$h4("Quel organe était touché ?"),
-                       lapply(1:6, function(i) {
-                         org_ids <- paste0("organe_cancer_", i)
-                         org_labels <- c("Thyroïde", "Poumon", "Sein", "Rein", "Prostate", "Autre")
-                         fluidRow(
-                           column(6, org_labels[i]),
-                           column(3, radioButtons(ns(org_ids), NULL, choices = c("Oui", "Non"), inline = TRUE, selected = ""))
-                         )
-                       }),
-                       
-                       conditionalPanel(
-                         condition = sprintf("input['%s'] == 'Oui'", ns("organe_cancer_6")),
-                         textInput(ns("cancer_autre"), "Précisez")
-                       ),
-                       
-                       radioButtons(ns("cancer_diagnostic_age"), "Quand le diagnostic vous a-t-il été fait ?", 
-                                    choices = c("Moins d'un an", "Entre 1 et 2 ans", "Entre 2 et 5 ans", "Plus de 5 ans"),
-                                    selected = ""
-                       )
-                     ),
-                     
-                     tags$h4("Santé actuelle"),
-                     lapply(1:4, function(i) {
-                       sympt_ids <- paste0("sante_actuelle_", i)
-                       sympt_labels <- c(
-                         "Avez-vous l'impression d'avoir perdu de la force dans la/les jambe(s) ?",
-                         "Avez-vous l'impression d'avoir perdu de la force dans le/les bras ?",
-                         "Avez-vous l'impression d'avoir perdu de la sensibilité (zone endormie / cartonnée) dans le/les pied(s) ou jambe(s) ?",
-                         "Avez-vous l'impression d'avoir perdu de la sensibilité (zone endormie / cartonnée) dans la/les main(s) ou le/les bras ?"
-                       )
-                       fluidRow(
-                         column(6, sympt_labels[i]),
-                         column(3, radioButtons(ns(sympt_ids), NULL, choices = c("Oui", "Non"), inline = TRUE, selected = ""))
-                       )
-                     }),
-                     
-                     tags$h4("Avez-vous constaté l'un des signes suivants ?"),
-                     lapply(1:3, function(i) {
-                       sympt_ids <- paste0("signes_generaux_", i)
-                       sympt_labels <- c(
-                         "Perte d'appétit",
-                         "Amaigrissement",
-                         "Fatigue importante"
-                       )
-                       fluidRow(
-                         column(6, sympt_labels[i]),
-                         column(3, radioButtons(ns(sympt_ids), NULL, choices = c("Oui", "Non"), inline = TRUE, selected = ""))
-                       )
-                     }),
-                     
-                     radioButtons(ns("infection_urinaire_3mois"), "Avez-vous eu une infection urinaire dans les 3 derniers mois ?", choices = c("Oui", "Non"), selected = ""),
-                     radioButtons(ns("antibio_3mois"), "Avez-vous pris des antibiotiques, pour quelque raison que ce soit, au cours des 3 derniers mois ?", choices = c("Oui", "Non"), selected = ""),
-                     
-                     tags$h4(HTML("<u><b>Pour traiter l'épisode de douleur <i>actuelle</i></b></u>, avez-vous eu :")),
-                     
-                     radioButtons(ns("trait_kine"), "Kinésithérapie", choices = c("Oui", "Non"), selected = ""),
-                     conditionalPanel(
-                       condition = sprintf("input['%s'] == 'Oui'", ns("trait_kine")),
-                       selectInput(ns("pgic_kine"), "Effet de la kinésithérapie (PGIC)", 
-                                   choices = c("",
-                                               "Pas de changement ou c’est devenu pire", 
-                                               "Presque pareil, pratiquement pas d’amélioration",
-                                               "Un peu mieux mais pas de changement notable",
-                                               "Plutôt mieux mais le changement ne fait pas de réelle différence",
-                                               "Mieux, le changement est modéré mais notable",
-                                               "Mieux avec sans aucun doute une amélioration réelle qui fait la différence",
-                                               "Nettement mieux, une amélioration considérable qui fait toute la différence"
-                                   ), selected = "")
-                     ),
-                     
-                     radioButtons(ns("trait_medoc"), "Médicaments", choices = c("Oui", "Non"), selected = ""),
-                     conditionalPanel(
-                       condition = sprintf("input['%s'] == 'Oui'", ns("trait_medoc")),
-                       selectInput(ns("pgic_medoc"), "Effet des médicaments (PGIC)", 
-                                   choices = c("",
-                                               "Pas de changement ou c’est devenu pire", 
-                                               "Presque pareil, pratiquement pas d’amélioration",
-                                               "Un peu mieux mais pas de changement notable",
-                                               "Plutôt mieux mais le changement ne fait pas de réelle différence",
-                                               "Mieux, le changement est modéré mais notable",
-                                               "Mieux avec sans aucun doute une amélioration réelle qui fait la différence",
-                                               "Nettement mieux, une amélioration considérable qui fait toute la différence"
-                                   ), selected = "")
-                     ),
-                     
-                     radioButtons(ns("trait_infiltration"), "Infiltrations", choices = c("Oui", "Non"), selected = ""),
-                     conditionalPanel(
-                       condition = sprintf("input['%s'] == 'Oui'", ns("trait_infiltration")),
-                       selectInput(ns("pgic_infiltration"), "Effet des infiltrations (PGIC)", 
-                                   choices = c("",
-                                               "Pas de changement ou c’est devenu pire", 
-                                               "Presque pareil, pratiquement pas d’amélioration",
-                                               "Un peu mieux mais pas de changement notable",
-                                               "Plutôt mieux mais le changement ne fait pas de réelle différence",
-                                               "Mieux, le changement est modéré mais notable",
-                                               "Mieux avec sans aucun doute une amélioration réelle qui fait la différence",
-                                               "Nettement mieux, une amélioration considérable qui fait toute la différence"
-                                   ), selected = "")
-                     ),
-                     
-                     radioButtons(ns("trait_osteo"), "Ostéopathie / Thérapie manuelle", choices = c("Oui", "Non"), selected = ""),
-                     conditionalPanel(
-                       condition = sprintf("input['%s'] == 'Oui'", ns("trait_osteo")),
-                       selectInput(ns("pgic_osteo"), "Effet de l'ostéopathie (PGIC)", 
-                                   choices = c(
-                                     "Pas de changement ou c’est devenu pire", 
-                                     "Presque pareil, pratiquement pas d’amélioration",
-                                     "Un peu mieux mais pas de changement notable",
-                                     "Plutôt mieux mais le changement ne fait pas de réelle différence",
-                                     "Mieux, le changement est modéré mais notable",
-                                     "Mieux avec sans aucun doute une amélioration réelle qui fait la différence",
-                                     "Nettement mieux, une amélioration considérable qui fait toute la différence"
-                                   ), selected = "")
-                     ),
-                     
-                     radioButtons(ns("sympt_acceptables"), 
-                                  label = "Les symptômes actuels sont-ils acceptables ?", 
-                                  choices = c("Oui", "Non"), 
-                                  selected = ""),
                      
                      tags$h4("Localisation principale de la douleur"),
                      radioButtons(ns("zone_consulte"), "Consultez-vous pour :", 
@@ -521,39 +264,6 @@ mod_questionnaire_patient_server <- function(id) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     
-    # 🕵️‍♂️ Récupérer l'identifiant du kiné depuis l'URL
-    query <- parseQueryString(session$clientData$url_search)
-    kine_id <- query[["kine"]]  # ex: "JP_APS"
-    
-    # 🔁 Mapping ID → Nom lisible
-    kine_map <- c(
-      "JP_APS" = "Deneuville JP (Atelier Physio Sport)",
-      "Leif_APS" = "Leif Steen (Atelier Physio Sport)",
-      "Audrey_APS" = "Audrey Raillard (Atelier Physio Sport)",
-      "Martin_APS" = "Martin Meyer (Atelier Physio Sport)",
-      "Mathilde_APS" = "Mathilde Rousseau (Atelier Physio Sport)",
-      "Adrien_APS" = "Adrien Harlé (Atelier Physio Sport)",
-      "Alexandra_APS" = "Alexandra Cervantes (Atelier Physio Sport)",
-      "Juliette_APS" = "Juliette Cavalier (Atelier Physio Sport)",
-      "Victor_APS" = "Victor Lebrault (Atelier Physio Sport)",
-      "Romain_APS" = "Romain Deguine (Atelier Physio Sport)",
-      "Colonier_APS" = "Colonier Sylvain (Atelier Physio Sport)",
-      "Clemence_APS" = "Clémence Hamel (Atelier Physio Sport)",
-      "Axel_APS" = "Axel Kremmer (Atelier Physio Sport)",
-      "Antoine_APS" = "Antoine Massuleau (Atelier Physio Sport)",
-      "Anthony_APS" = "Anthony Demont (Atelier Physio Sport)",
-      "Marie_APS" = "Marie Akrich (Atelier Physio Sport)",
-      "Clement_MSV" = "Clément Perrin (Maison de santé Villejuif)",
-      "Joseph_MSV" = "Joseph Verrier (Maison de santé Villejuif)",
-      "Romain_MSV" = "Romain Artico (Maison de santé Villejuif)",
-      "Brice_MSV" = "Brice Leite George (Maison de santé Villejuif)",
-      "Olivier_MSV" = "Olivier Daudier (Maison de santé Villejuif)"
-    )
-    
-    # Nom complet du kiné à intégrer dans le CSV
-    kine_nom <- kine_map[[kine_id]]
-    if (is.null(kine_nom)) kine_nom <- NA  # fallback au cas où
-    
     observeEvent(input$save_btn, {
       tryCatch({
         
@@ -566,52 +276,15 @@ mod_questionnaire_patient_server <- function(id) {
         
         # 📋 Étape 2 - Champs requis de base
         required_fields <- c(
-          "nom", "prenom", "naissance", "taille", "poids", "sexe", "statut",
-          "trauma_experience", "chirurgie_rachis", "chir_recent", "cancer_diagnosed",
-          "zone_consulte", "tabac", "sympt_acceptables",
-          "trait_kine", "trait_medoc", "trait_infiltration", "trait_osteo",
+          "nom", "prenom", "naissance",
           paste0("had_", 1:14),
           paste0("bipq_", 1:8),
-          "eq_mobilite", "eq_autonomie", "eq_activites", "eq_douleur", "eq_anxiete", "eq_vas"
+          "eq_mobilite", "eq_autonomie", "eq_activites", "eq_douleur", "eq_anxiete", "eq_vas", "situation_pro",  "duree_effet_douleur",
+          "zone_consulte"
         )
         
         # ✅ Conditions spécifiques avec sécurité
-        if (isTruthy(input$statut) && input$statut %in% c("Actif", "Retraité")) {
-          required_fields <- c(required_fields, "metier", "pcs")
-        }
-        if (isTruthy(input$statut) && input$statut == "Actif") {
-          required_fields <- c(required_fields, "situation_pro")
-        }
-        if (isTruthy(input$sport_pratique) && input$sport_pratique == "Oui") {
-          required_fields <- c(required_fields, "sport", "frequence_semaine", "duree_entrainement", "duree_effet_douleur")
-        }
-        if (isTruthy(input$chirurgie_rachis) && input$chirurgie_rachis == "Oui") {
-          required_fields <- c(required_fields, "type_chirurgie", "date_chirurgie")
-        }
-        if (isTruthy(input$chir_recent) && input$chir_recent == "Oui") {
-          required_fields <- c(required_fields, "chir_recent_details")
-        }
-        if (isTruthy(input$trauma_experience) && input$trauma_experience == "Oui") {
-          required_fields <- c(required_fields, paste0("ptsd_sympt_", 1:5))
-        }
-        if (isTruthy(input$cancer_diagnosed) && input$cancer_diagnosed == "Oui") {
-          required_fields <- c(required_fields, paste0("organe_cancer_", 1:6), "cancer_diagnostic_age")
-          if (isTruthy(input$organe_cancer_6) && input$organe_cancer_6 == "Oui") {
-            required_fields <- c(required_fields, "cancer_autre")
-          }
-        }
-        if (isTruthy(input$trait_kine) && input$trait_kine == "Oui") {
-          required_fields <- c(required_fields, "pgic_kine")
-        }
-        if (isTruthy(input$trait_medoc) && input$trait_medoc == "Oui") {
-          required_fields <- c(required_fields, "pgic_medoc")
-        }
-        if (isTruthy(input$trait_infiltration) && input$trait_infiltration == "Oui") {
-          required_fields <- c(required_fields, "pgic_infiltration")
-        }
-        if (isTruthy(input$trait_osteo) && input$trait_osteo == "Oui") {
-          required_fields <- c(required_fields, "pgic_osteo")
-        }
+        
         if (isTruthy(input$zone_consulte) && input$zone_consulte %in% c("Les lombaires", "Les 2")) {
           required_fields <- c(required_fields, paste0("odi_", 1:10))
         }
@@ -642,17 +315,6 @@ mod_questionnaire_patient_server <- function(id) {
         
         # 🏷️ Étape 6 - Renommage pour analyse
         rename_map <- c(
-          atcd_rhumato_1 = "rhumato_spa", atcd_rhumato_2 = "rhumato_pr", atcd_rhumato_3 = "rhumato_crohn",
-          atcd_rhumato_4 = "rhumato_rch", atcd_rhumato_5 = "rhumato_uveite", atcd_rhumato_6 = "rhumato_psoriasis",
-          goutte = "rhumato_goutte",
-          atcd_cardio_1 = "cardio_chol", atcd_cardio_2 = "cardio_hta", atcd_cardio_3 = "cardio_diabete",
-          atcd_cardio_4 = "cardio_cardiaque", atcd_cardio_5 = "cardio_arterite",
-          sante_actuelle_1 = "neuro_force_mi", sante_actuelle_2 = "neuro_force_ms",
-          sante_actuelle_3 = "neuro_sens_mi", sante_actuelle_4 = "neuro_sens_ms",
-          signes_generaux_1 = "general_appetit", signes_generaux_2 = "general_perte_poids",
-          signes_generaux_3 = "general_fatigue",
-          organe_cancer_1 = "cancer_thyroïde", organe_cancer_2 = "cancer_poumon", organe_cancer_3 = "cancer_sein",
-          organe_cancer_4 = "cancer_rein", organe_cancer_5 = "cancer_prostate", organe_cancer_6 = "cancer_autre",
           odi_1 = "odi_douleur", odi_2 = "odi_soins", odi_3 = "odi_manutentions", odi_4 = "odi_marche",
           odi_5 = "odi_assis", odi_6 = "odi_debout", odi_7 = "odi_sommeil", odi_8 = "odi_sexe",
           odi_9 = "odi_sociale", odi_10 = "odi_deplacements",
@@ -669,9 +331,8 @@ mod_questionnaire_patient_server <- function(id) {
         names(values) <- ifelse(names(values) %in% names(rename_map), rename_map[names(values)], names(values))
         
         # 💾 Étape 7 - Sauvegarde CSV
-        values$kine_nom <- kine_nom
         row <- as.data.frame(values, stringsAsFactors = FALSE)
-        path <- "data/patients_PROM.csv"
+        path <- "data/patients_PROM2.csv"
         if (!dir.exists("data")) dir.create("data")
         if (file.exists(path)) {
           write.table(row, path, sep = ";", row.names = FALSE, col.names = FALSE, append = TRUE)
